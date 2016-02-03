@@ -3,7 +3,7 @@
 # Generates the default exhibitor config and launches exhibitor
 
 MISSING_VAR_MESSAGE="must be set"
-DEFAULT_AWS_REGION="us-west-2"
+DEFAULT_AWS_REGION="us-east-1"
 DEFAULT_DATA_DIR="/opt/zookeeper/snapshots"
 DEFAULT_LOG_DIR="/opt/zookeeper/transactions"
 DEFAULT_ZK_ENSEMBLE_SIZE=0
@@ -87,9 +87,15 @@ exec 2>&1
 # 	--s3credentials /opt/exhibitor/credentials.properties \
 # 	--s3region us-west-2 --s3backup true
 
+trap 'kill -TERM $PID' TERM INT
 java -jar /opt/exhibitor/exhibitor.jar \
   --port 8181 --defaultconfig /opt/exhibitor/defaults.conf \
   ${BACKUP_CONFIG} \
   ${HTTP_PROXY} \
   --hostname ${HOSTNAME} \
-  ${SECURITY}
+  ${SECURITY} &
+PID=$!
+wait $PID
+trap - TERM INT
+wait $PID
+EXIT_STATUS=$?
